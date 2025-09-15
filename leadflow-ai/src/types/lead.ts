@@ -2,9 +2,16 @@ export type LeadSource =
   | "ai_initial"
   | "website"
   | "public_registry"
-  | "professional_network";
+  | "professional_network"
+  | "linkedin";
 
-export type SourceMethod = "gemini" | "serpapi" | "abr" | "http_fetch" | "manual";
+export type SourceMethod =
+  | "gemini"
+  | "serpapi"
+  | "abr"
+  | "http_fetch"
+  | "manual"
+  | "linkedin";
 
 export interface ProvenanceEntry {
   source: LeadSource;
@@ -19,6 +26,23 @@ export interface ContactPerson {
   email?: string;
 }
 
+export interface LinkedInProfile {
+  fullName: string;
+  title?: string;
+  profileUrl?: string;
+  location?: string;
+  linkedinId?: string;
+  isDecisionMaker?: boolean;
+}
+
+export interface LinkedInCompanyMeta {
+  companyUrl?: string;
+  companyId?: string;
+  industry?: string;
+  headquarters?: string;
+  employeeCount?: number;
+}
+
 export interface Lead {
   name: string;
   website?: string;
@@ -26,6 +50,8 @@ export interface Lead {
   address?: string;
   email?: string;
   contacts?: ContactPerson[];
+  linkedinCompany?: LinkedInCompanyMeta;
+  linkedinProfiles?: LinkedInProfile[];
   locationCity?: string;
   locationState?: string;
   aiScore?: number;
