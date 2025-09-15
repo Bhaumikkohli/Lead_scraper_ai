@@ -25,7 +25,7 @@ export default function Home() {
       });
       const json = await res.json();
       setRunResult(json);
-      setStatus("completed");
+      setStatus(res.ok ? "completed" : "idle");
     } catch (e) {
       setStatus("idle");
     }
@@ -70,12 +70,31 @@ export default function Home() {
 
         <div className="bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5">
           <div className="text-sm uppercase tracking-widest text-[#9BCDBA] mb-3">Generated Leads</div>
-          <div className="space-y-2">
-            {runResult?.leadCount ? (
-              <div className="text-sm text-[#CDE7D8]">Run created with ID {runResult.runId}. Lead count: {runResult.leadCount}. Keys: {JSON.stringify(runResult.keyHints)}</div>
-            ) : (
-              <div className="text-sm text-[#9BCDBA]">No leads yet. Start a run.</div>
+          <div className="space-y-4">
+            {runResult?.error && (
+              <div className="text-sm text-red-400">{runResult.error}. {runResult.missingKeys?.join(", ")}</div>
             )}
+            {runResult?.leads && (
+              <div className="space-y-3">
+                {runResult.leads.map((lead: any, idx: number) => (
+                  <div key={idx} className="p-3 bg-[#0B1012] border border-[#1E2A29] rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-[#E8F5E9]">{lead.name}</div>
+                      <div className="text-xs text-[#9BCDBA]">{lead.status}</div>
+                    </div>
+                    <div className="text-xs text-[#CDE7D8] mt-1">{lead.website || "No website"}</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {lead.sources?.map((s: any, i: number) => (
+                        <span key={i} className="px-2 py-1 text-xs rounded-full border border-[#1E2A29] bg-[#0F1517] text-[#9BCDBA]">
+                          {s.source} · {s.method}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!runResult && <div className="text-sm text-[#9BCDBA]">No leads yet. Start a run.</div>}
           </div>
         </div>
 

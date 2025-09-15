@@ -19,13 +19,9 @@ export function getGeminiModel(model = "gemini-1.5-flash") {
 
 export async function generateJSON<T>(prompt: string): Promise<T> {
   const model = getGeminiModel();
-  const res = await model.generateContent([
-    {
-      text:
-        prompt +
-        "\n\nOnly respond with JSON. Do not include any preamble or code fences.",
-    } as any,
-  ]);
+  const res = await model.generateContent(
+    prompt + "\n\nOnly respond with JSON. Do not include any preamble or code fences."
+  );
   const text = res.response.text();
   try {
     return JSON.parse(text) as T;

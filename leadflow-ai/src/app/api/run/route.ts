@@ -3,7 +3,9 @@ import { z } from "zod";
 import { generateJSON } from "@/lib/gemini";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { Lead, ProvenanceEntry } from "@/types/lead";
-import { SERVER_ENV } from "@/lib/env";
+import { SERVER_ENV, getKeyStatus } from "@/lib/env";
+
+export const runtime = "nodejs";
 
 const bodySchema = z.object({
   userId: z.string().min(1),
@@ -44,6 +46,19 @@ export async function POST(req: NextRequest) {
   try {
     const json = await req.json();
     const { userId, keywords, locations, limit } = bodySchema.parse(json);
+
+    // Validate keys up-front
+    const keyStatus = getKeyStatus();
+    if (!keyStatus.geminiReady) {
+      return NextResponse.json(
+        {
+          error: "Missing required API keys",
+          missingKeys: keyStatus.missingKeys,
+          hint: "Add GOOGLE_GEMINI_API_KEY and Firebase Admin keys in .env.local",
+        },
+        { status: 400 }
+      );
+    }
 
     // Step 1: Initial lead discovery via Gemini
     const prompt1 = `Find ${limit} real businesses in Australia related to "${keywords}" in cities like "${locations}". For each business, provide its name, website URL, phone number, and full address. Respond as JSON: {"leads":[{"name":"","website":"","phone":"","address":""}]}`;
@@ -134,30 +149,42 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Persist to Firestore under user archive
-    const db = getAdminDb();
-    const runRef = db
-      .collection("users")
-      .doc(userId)
-      .collection("archive")
-      .doc();
-    const runDoc = {
-      date: new Date(),
-      keywords,
-      locations,
-      leadCount: leads.length,
-      leads,
-    };
-    await runRef.set(runDoc as any);
-
+    // Persist to Firestore under user archive if admin configured
     const serverEnv = SERVER_ENV();
+    let runId = "local-dev";
+    try {
+      if (
+        serverEnv.FIREBASE_PROJECT_ID &&
+        serverEnv.FIREBASE_CLIENT_EMAIL &&
+        serverEnv.FIREBASE_PRIVATE_KEY
+      ) {
+        const db = getAdminDb();
+        const runRef = db
+          .collection("users")
+          .doc(userId)
+          .collection("archive")
+          .doc();
+        const runDoc = {
+          date: new Date(),
+          keywords,
+          locations,
+          leadCount: leads.length,
+          leads,
+        };
+        await runRef.set(runDoc as any);
+        runId = runRef.id;
+      }
+    } catch (_) {
+      // ignore persistence failure in dev
+    }
+
     const keyHints = {
       geminiConfigured: Boolean(serverEnv.GOOGLE_GEMINI_API_KEY),
       serpapiConfigured: Boolean(serverEnv.SERPAPI_API_KEY),
       abrConfigured: Boolean(serverEnv.ABR_GUID),
     };
 
-    return NextResponse.json({ runId: runRef.id, leadCount: leads.length, keyHints });
+    return NextResponse.json({ runId, leadCount: leads.length, leads, keyHints });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? "Unknown error" }, { status: 400 });
   }
