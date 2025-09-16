@@ -6,8 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  const userId = searchParams.get("userId") || "dev-user";
 
   const env = SERVER_ENV();
   if (!env.FIREBASE_PROJECT_ID || !env.FIREBASE_CLIENT_EMAIL || !env.FIREBASE_PRIVATE_KEY) {
@@ -15,7 +14,13 @@ export async function GET(req: NextRequest) {
   }
   try {
     const db = getAdminDb();
-    const snap = await db.collection("users").doc(userId).collection("archive").orderBy("date", "desc").limit(50).get();
+    const snap = await db
+      .collection("users")
+      .doc(userId)
+      .collection("archive")
+      .orderBy("date", "desc")
+      .limit(50)
+      .get();
     const runs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     return NextResponse.json({ runs });
   } catch (e: any) {

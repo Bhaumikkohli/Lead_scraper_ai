@@ -5,6 +5,7 @@ import GlassCard from "@/components/ui/GlassCard";
 import GlowButton from "@/components/ui/GlowButton";
 import KeyStatusBanner from "@/components/KeyStatusBanner";
 import NeonBackground from "@/components/ui/NeonBackground";
+import RunProgressConsole from "@/components/RunProgressConsole";
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "running" | "completed">("idle");
@@ -20,19 +21,8 @@ export default function Home() {
   }
 
   async function startRun() {
+    setRunResult(null);
     setStatus("running");
-    try {
-      const res = await fetch("/api/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: "dev-user", keywords, locations, limit }),
-      });
-      const json = await res.json();
-      setRunResult(json);
-      setStatus(res.ok ? "completed" : "idle");
-    } catch (e) {
-      setStatus("idle");
-    }
   }
 
   return (
@@ -92,7 +82,7 @@ export default function Home() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {lead.sources?.map((s: any, i: number) => (
                         <span key={i} className="px-2 py-1 text-xs rounded-full border border-[#1E2A29] bg-[#0F1517] text-[#9BCDBA]">
-                          {s.source} · {s.method}
+                          {s.source} · {s.method} · {s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : ""}
                         </span>
                       ))}
                     </div>
@@ -100,7 +90,16 @@ export default function Home() {
                 ))}
               </div>
             )}
-            {!runResult && <div className="text-sm text-[#9BCDBA]">No leads yet. Start a run.</div>}
+            {!runResult && status !== "running" && <div className="text-sm text-[#9BCDBA]">No leads yet. Start a run.</div>}
+            {status === "running" && (
+              <RunProgressConsole
+                userId="dev-user"
+                keywords={keywords}
+                locations={locations}
+                limit={limit}
+                onComplete={(d)=>{ setRunResult(d); setStatus("completed"); }}
+              />
+            )}
           </div>
         </GlassCard>
 
