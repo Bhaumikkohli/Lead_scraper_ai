@@ -20,7 +20,10 @@ export default function RootLayout({
             "radial-gradient(1200px 600px at 0% 0%, rgba(0,255,153,0.08), transparent 60%), radial-gradient(800px 400px at 100% 100%, rgba(0,255,153,0.06), transparent 60%)",
         }}
       >
-        <div className="min-h-screen grid grid-cols-[260px_1fr]">
+        <div className="min-h-screen grid grid-cols-[260px_1fr] relative">
+          <div className="pointer-events-none absolute inset-0 opacity-40" style={{ maskImage: "radial-gradient(75% 55% at 50% 0%, black 60%, transparent 100%)" }}>
+            <div className="absolute top-14 left-[260px] right-0 h-[1px] bg-gradient-to-r from-transparent via-[#0CF29D40] to-transparent" />
+          </div>
           <aside className="bg-[#0D1113] border-r border-[#1E2A29]/60">
             <div className="h-16 flex items-center px-5 border-b border-[#1E2A29]/60">
               <div className="h-8 w-8 rounded-md bg-[#0CF29D]/20 border border-[#0CF29D]/30 mr-3" />

@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import GlassCard from "@/components/ui/GlassCard";
+import GlowButton from "@/components/ui/GlowButton";
+import KeyStatusBanner from "@/components/KeyStatusBanner";
+import NeonBackground from "@/components/ui/NeonBackground";
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "running" | "completed">("idle");
@@ -32,8 +36,10 @@ export default function Home() {
   }
 
   return (
+    <NeonBackground>
     <div className="grid md:grid-cols-3 gap-6">
-      <div className="md:col-span-1 bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5 shadow-[0_0_0_1px_#0CF29D20,0_0_30px_#0CF29D10]">
+      <div className="md:col-span-3"><KeyStatusBanner /></div>
+      <GlassCard className="md:col-span-1 p-5">
         <div className="text-sm uppercase tracking-widest text-[#9BCDBA] mb-3">New Lead Run</div>
         <div className="space-y-3">
           <input value={keywords} onChange={(e)=>setKeywords(e.target.value)} placeholder="Keywords (e.g., plumbers, cafes)" className="w-full bg-[#0B1012] border border-[#1E2A29] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#0CF29D] focus:shadow-[0_0_0_1px_#0CF29D80]" />
@@ -43,13 +49,13 @@ export default function Home() {
             <div className={`h-2 w-2 rounded-full ${status==="running"?"bg-[#0CF29D] animate-pulse":"bg-[#1E2A29]"}`} />
             <div>{status === "idle" ? "Idle" : status === "running" ? "Running..." : "Completed"}</div>
           </div>
-          <button onClick={startRun} className="w-full bg-[#0CF29D] text-black rounded-md py-2 text-sm font-semibold hover:brightness-90 transition">Start Scraping & Analysis</button>
+          <GlowButton onClick={startRun} className="w-full">Start Scraping & Analysis</GlowButton>
           <button onClick={checkKeys} className="w-full border border-[#1E2A29] text-[#CDE7D8] rounded-md py-2 text-sm hover:border-[#0CF29D]/50 transition">Check API Keys</button>
         </div>
-      </div>
+      </GlassCard>
 
       <div className="md:col-span-2 space-y-6">
-        <div className="bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5">
+        <GlassCard className="p-5">
           <div className="text-sm uppercase tracking-widest text-[#9BCDBA] mb-3">Funnel Overview</div>
           <div className="space-y-3">
             {[
@@ -66,9 +72,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5">
+        <GlassCard className="p-5">
           <div className="text-sm uppercase tracking-widest text-[#9BCDBA] mb-3">Generated Leads</div>
           <div className="space-y-4">
             {runResult?.error && (
@@ -96,15 +102,16 @@ export default function Home() {
             )}
             {!runResult && <div className="text-sm text-[#9BCDBA]">No leads yet. Start a run.</div>}
           </div>
-        </div>
+        </GlassCard>
 
         {keysStatus && (
-          <div className="bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5">
+          <GlassCard className="p-5">
             <div className="text-sm uppercase tracking-widest text-[#9BCDBA] mb-3">API Key Status</div>
             <pre className="text-xs text-[#CDE7D8] whitespace-pre-wrap">{JSON.stringify(keysStatus, null, 2)}</pre>
-          </div>
+          </GlassCard>
         )}
       </div>
     </div>
+    </NeonBackground>
   );
 }

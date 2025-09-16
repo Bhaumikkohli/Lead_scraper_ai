@@ -114,13 +114,13 @@ export async function POST(req: NextRequest) {
         }
       } catch (_) {}
 
-      // Step 4: Professional network (optional, placeholder using Gemini reasoning)
+      // Step 4: LinkedIn enrichment (placeholder using Gemini reasoning)
       try {
-        const pnPrompt = `Perform a live web search on LinkedIn for the company "${item.name}". Identify and extract the full names and exact job titles of 1-3 likely decision-makers (e.g., Owner, Founder, CEO, Marketing Director, Head of Sales). Respond JSON: {"decisionMakers":[{"fullName":"","title":""}]}`;
-        const pn = await generateJSON<ProfessionalNetworkResponse>(pnPrompt);
+        const pnPrompt = `Perform a live web search on LinkedIn for the company "${item.name}". Identify and extract the full names and exact job titles of 1-3 likely decision-makers (e.g., Owner, Founder, CEO, Marketing Director, Head of Sales). Respond JSON: {"decisionMakers":[{"fullName":"","title":"","profileUrl":""}]}`;
+        const pn = await generateJSON<ProfessionalNetworkResponse & { decisionMakers?: { fullName: string; title: string; profileUrl?: string }[] }>(pnPrompt);
         if (pn.decisionMakers && pn.decisionMakers.length > 0) {
           provenance.push({
-            source: "professional_network",
+            source: "linkedin",
             method: "gemini",
             details: "LinkedIn inferred",
             createdAt: nowIso(),
