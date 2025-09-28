@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       n8nConfigured: Boolean(serverEnv.N8N_WEBHOOK_URL),
     };
 
-    return NextResponse.json({ runId: runRef.id, leadCount: leads.length, keyHints });
+    return NextResponse.json({ runId: runRef.id, leadCount: leads.length, leads, keyHints });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? "Unknown error" }, { status: 400 });
   }

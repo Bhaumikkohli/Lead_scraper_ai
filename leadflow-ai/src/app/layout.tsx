@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "LeadFlow AI",
-  description: "AI Lead Generation Dashboard",
+  title: "LeadFlow Pro",
+  description: "Prospect extraction and validation platform",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
           <aside className="bg-[#0D1113] border-r border-[#1E2A29]/60">
             <div className="h-16 flex items-center px-5 border-b border-[#1E2A29]/60">
               <div className="h-8 w-8 rounded-md bg-[#0CF29D]/20 border border-[#0CF29D]/30 mr-3" />
-              <div className="font-semibold tracking-wide">LeadFlow AI</div>
+              <div className="font-semibold tracking-wide">LeadFlow Pro</div>
             </div>
             <nav className="p-3 space-y-1">
               <a className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-[#CDE7D8] hover:bg-[#0CF29D]/10 hover:text-white transition-colors" href="/">
