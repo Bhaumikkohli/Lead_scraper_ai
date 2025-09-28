@@ -1,14 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { KPIResponse } from "@/types/dashboard";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Verify auth token, derive userId
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { getAdminAuth } = await import("@/lib/firebase/admin");
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const decoded = await getAdminAuth().verifyIdToken(token);
+    const userId = decoded.uid;
     // For demo/dev, aggregate basic metrics from Firestore
     // In production, these would be precomputed or queried efficiently
     const db = getAdminDb();
-    // Simple scan under a dev user; adapt to auth in real app
-    const userId = "dev-user";
     const runsSnap = await db
       .collection("users")
       .doc(userId)

@@ -6,7 +6,8 @@ export type DashboardWidgetType =
   | "industryBreakdown"
   | "geoMap"
   | "recommendations"
-  | "scoreDistribution";
+  | "scoreDistribution"
+  | "runPanel";
 
 export interface DashboardWidgetInstance {
   id: string;

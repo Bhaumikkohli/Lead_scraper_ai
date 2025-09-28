@@ -1,10 +1,14 @@
-import { NextResponse } from "next/server";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { NextRequest, NextResponse } from "next/server";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase/admin";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const decoded = await getAdminAuth().verifyIdToken(token);
     const db = getAdminDb();
-    const userId = "dev-user";
+    const userId = decoded.uid;
 
     const runsSnap = await db.collection("users").doc(userId).collection("archive").orderBy("date", "desc").limit(3).get();
     const lastRun = runsSnap.docs[0]?.data() as any;

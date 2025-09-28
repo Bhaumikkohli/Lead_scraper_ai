@@ -1,10 +1,11 @@
 "use client";
 
 import useSWR from "swr";
+import { authFetch } from "@/lib/authFetch";
 
 type Recommendation = { id: string; text: string; action?: { label: string; href?: string; onClick?: string } };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string) => authFetch(url).then((r) => r.json());
 
 export function Recommendations() {
   const { data } = useSWR("/api/recommendations", fetcher, { refreshInterval: 60_000 });

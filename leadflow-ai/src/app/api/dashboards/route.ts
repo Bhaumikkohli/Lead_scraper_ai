@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase/admin";
 import { UserDashboard } from "@/types/dashboard";
 
 const upsertSchema = z.object({
@@ -22,10 +22,14 @@ const upsertSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const decoded = await getAdminAuth().verifyIdToken(token);
     const db = getAdminDb();
-    const userId = "dev-user";
+    const userId = decoded.uid;
     const snap = await db
       .collection("users")
       .doc(userId)
@@ -44,7 +48,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { id, name, widgets, isDefault } = upsertSchema.parse(body);
     const db = getAdminDb();
-    const userId = "dev-user";
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const decoded = await getAdminAuth().verifyIdToken(token);
+    const userId = decoded.uid;
     const collection = db.collection("users").doc(userId).collection("dashboards");
 
     let ref = id ? collection.doc(id) : collection.doc();

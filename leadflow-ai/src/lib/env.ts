@@ -9,6 +9,7 @@ const publicSchema = z.object({
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, "Missing NEXT_PUBLIC_FIREBASE_APP_ID"),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_DEV_MODE: z.union([z.literal("0"), z.literal("1")]).optional(),
+  NEXT_PUBLIC_APP_NAME: z.string().optional(),
 });
 
 const serverSchema = z.object({
@@ -18,6 +19,12 @@ const serverSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
+  N8N_URL: z.string().optional(),
+  N8N_WEBHOOK_URL: z.string().optional(),
+  N8N_WEBHOOK_BASIC_USER: z.string().optional(),
+  N8N_WEBHOOK_BASIC_PASS: z.string().optional(),
+  N8N_WEBHOOK_HEADER_NAME: z.string().optional(),
+  N8N_WEBHOOK_HEADER_VALUE: z.string().optional(),
 });
 
 export type KeyStatus = {
@@ -26,6 +33,7 @@ export type KeyStatus = {
   geminiReady: boolean;
   serpapiReady: boolean;
   abrReady: boolean;
+  n8nReady: boolean;
   missingKeys: string[];
 };
 
@@ -39,6 +47,7 @@ export function readPublicEnv() {
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
     NEXT_PUBLIC_DEV_MODE: process.env.NEXT_PUBLIC_DEV_MODE,
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
   });
   return parsed;
 }
@@ -85,12 +94,16 @@ export function getKeyStatus(): KeyStatus {
   const abrReady = Boolean(s && s.ABR_GUID);
   if (!abrReady) missing.push("Missing ABR_GUID (optional)");
 
+  const n8nReady = Boolean((s && (s.N8N_WEBHOOK_URL || s.N8N_URL)));
+  if (!n8nReady) missing.push("Missing N8N_WEBHOOK_URL (or N8N_URL) for n8n integration (optional)");
+
   return {
     firebaseClientReady: publicEnv.success,
     firebaseAdminReady,
     geminiReady,
     serpapiReady,
     abrReady,
+    n8nReady,
     missingKeys: missing,
   };
 }
@@ -116,6 +129,16 @@ export const SERVER_ENV = () => ({
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
   FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
+  N8N_URL: process.env.N8N_URL,
+  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
+  N8N_WEBHOOK_BASIC_USER: process.env.N8N_WEBHOOK_BASIC_USER,
+  N8N_WEBHOOK_BASIC_PASS: process.env.N8N_WEBHOOK_BASIC_PASS,
+  N8N_WEBHOOK_HEADER_NAME: process.env.N8N_WEBHOOK_HEADER_NAME,
+  N8N_WEBHOOK_HEADER_VALUE: process.env.N8N_WEBHOOK_HEADER_VALUE,
 });
+
+export function APP_NAME(): string {
+  return process.env.NEXT_PUBLIC_APP_NAME || "Lead Scraper AI";
+}
 
 
