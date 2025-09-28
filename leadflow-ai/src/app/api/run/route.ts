@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateJSON } from "@/lib/gemini";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase/admin";
 import { Lead, ProvenanceEntry } from "@/types/lead";
 import { SERVER_ENV } from "@/lib/env";
 
@@ -42,8 +42,13 @@ function nowIso() {
 
 export async function POST(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const decoded = await getAdminAuth().verifyIdToken(token);
     const json = await req.json();
     const { userId, keywords, locations, limit } = bodySchema.parse(json);
+    const uid = decoded.uid || userId;
 
     // Step 1: Initial lead discovery via Gemini
     const prompt1 = `Find ${limit} real businesses in Australia related to "${keywords}" in cities like "${locations}". For each business, provide its name, website URL, phone number, and full address. Respond as JSON: {"leads":[{"name":"","website":"","phone":"","address":""}]}`;
@@ -138,7 +143,7 @@ export async function POST(req: NextRequest) {
     const db = getAdminDb();
     const runRef = db
       .collection("users")
-      .doc(userId)
+      .doc(uid)
       .collection("archive")
       .doc();
     const runDoc = {
@@ -157,7 +162,13 @@ export async function POST(req: NextRequest) {
       abrConfigured: Boolean(serverEnv.ABR_GUID),
     };
 
-    return NextResponse.json({ runId: runRef.id, leadCount: leads.length, keyHints });
+    // Build source counts for UI filtering
+    const sourceCounts: Record<string, number> = {};
+    for (const l of leads) {
+      for (const s of l.sources) sourceCounts[s.source] = (sourceCounts[s.source] || 0) + 1;
+    }
+
+    return NextResponse.json({ runId: runRef.id, leadCount: leads.length, keyHints, leads, sourceCounts });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? "Unknown error" }, { status: 400 });
   }

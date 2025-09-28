@@ -9,6 +9,7 @@ const publicSchema = z.object({
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, "Missing NEXT_PUBLIC_FIREBASE_APP_ID"),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_DEV_MODE: z.union([z.literal("0"), z.literal("1")]).optional(),
+  NEXT_PUBLIC_APP_NAME: z.string().optional(),
 });
 
 const serverSchema = z.object({
@@ -39,6 +40,7 @@ export function readPublicEnv() {
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
     NEXT_PUBLIC_DEV_MODE: process.env.NEXT_PUBLIC_DEV_MODE,
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
   });
   return parsed;
 }
@@ -117,5 +119,9 @@ export const SERVER_ENV = () => ({
   FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
 });
+
+export function APP_NAME(): string {
+  return process.env.NEXT_PUBLIC_APP_NAME || "Lead Scraper AI";
+}
 
 

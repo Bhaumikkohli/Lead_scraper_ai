@@ -9,6 +9,7 @@ import { CampaignPerformance } from "./widgets/CampaignPerformance";
 import { IndustryBreakdown } from "./widgets/IndustryBreakdown";
 import { GeoMap } from "./widgets/GeoMap";
 import { Recommendations } from "./widgets/Recommendations";
+import { RunPanel } from "./widgets/RunPanel";
 import { DashboardWidgetInstance } from "@/types/dashboard";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -22,6 +23,7 @@ type Props = {
 
 const defaultWidgets: DashboardWidgetInstance[] = [
   { id: "kpi", type: "kpiBar", x: 0, y: 0, w: 12, h: 3 },
+  { id: "runpanel", type: "runPanel", x: 6, y: 3, w: 6, h: 8 },
   { id: "funnel", type: "funnel", x: 0, y: 3, w: 6, h: 6 },
   { id: "source", type: "sourceBreakdown", x: 6, y: 3, w: 6, h: 6 },
   { id: "campaign", type: "campaignPerformance", x: 0, y: 9, w: 12, h: 6 },
@@ -57,6 +59,8 @@ export function DashboardGrid({ widgets: initial, onChange }: Props) {
     switch (w.type) {
       case "kpiBar":
         return <KPIBar />;
+      case "runPanel":
+        return <RunPanel />;
       case "funnel":
         return (
           <FunnelChart
