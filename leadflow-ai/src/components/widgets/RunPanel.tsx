@@ -45,6 +45,8 @@ export function RunPanel() {
         body: JSON.stringify({ userId: "self", keywords, locations, limit }),
       });
       const json = await res.json();
+      const serverEvents = (json?.events || []).map((e: any) => ({ step: e.step as any, detail: e.detail as string, at: e.at as string })) as PipelineEvent[];
+      setEvents((prev) => [...prev, ...serverEvents]);
 
       pushEvent("campaignQueue", `Prepared ${json?.leadCount ?? 0} leads for campaigns`);
       setLeads((json?.leads || []).slice(0, 100));
