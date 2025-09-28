@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateJSON } from "@/lib/gemini";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase/admin";
 import { Lead, ProvenanceEntry } from "@/types/lead";
 import { SERVER_ENV } from "@/lib/env";
 
 const bodySchema = z.object({
-  userId: z.string().min(1),
   keywords: z.string().min(1),
   locations: z.string().min(1),
   limit: z.number().int().positive().max(50).default(5),
@@ -42,8 +41,24 @@ function nowIso() {
 
 export async function POST(req: NextRequest) {
   try {
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice('Bearer '.length)
+      : undefined;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    let userId: string;
+    try {
+      const adminAuth = getAdminAuth();
+      const decoded = await adminAuth.verifyIdToken(token);
+      userId = decoded.uid;
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     const json = await req.json();
-    const { userId, keywords, locations, limit } = bodySchema.parse(json);
+    const { keywords, locations, limit } = bodySchema.parse(json);
 
     // Step 1: Initial lead discovery via Gemini
     const prompt1 = `Find ${limit} real businesses in Australia related to "${keywords}" in cities like "${locations}". For each business, provide its name, website URL, phone number, and full address. Respond as JSON: {"leads":[{"name":"","website":"","phone":"","address":""}]}`;
@@ -148,7 +163,7 @@ export async function POST(req: NextRequest) {
       leadCount: leads.length,
       leads,
     };
-    await runRef.set(runDoc as any);
+    await runRef.set(runDoc as unknown as Record<string, unknown>);
 
     const serverEnv = SERVER_ENV();
     const keyHints = {
@@ -158,8 +173,9 @@ export async function POST(req: NextRequest) {
     };
 
     return NextResponse.json({ runId: runRef.id, leadCount: leads.length, keyHints });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message ?? "Unknown error" }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 

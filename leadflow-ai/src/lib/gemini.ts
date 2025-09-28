@@ -24,7 +24,7 @@ export async function generateJSON<T>(prompt: string): Promise<T> {
       text:
         prompt +
         "\n\nOnly respond with JSON. Do not include any preamble or code fences.",
-    } as any,
+    },
   ]);
   const text = res.response.text();
   try {
