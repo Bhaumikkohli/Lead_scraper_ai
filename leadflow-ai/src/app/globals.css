@@ -7,6 +7,17 @@
   --foreground: #E8F5E9;
 }
 
+/* Light/Dark theme tokens */
+html.theme-dark {
+  --background: #0B0F10;
+  --foreground: #E8F5E9;
+}
+
+html.theme-light {
+  --background: #F7FAF9;
+  --foreground: #0B0F10;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
