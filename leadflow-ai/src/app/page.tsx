@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import WorkflowPipeline from "@/components/WorkflowPipeline";
 import type { Lead } from "@/types/lead";
+import LeadDetailsModal from "@/components/LeadDetailsModal";
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "running" | "completed">("idle");
@@ -13,6 +14,7 @@ export default function Home() {
   const [runLeads, setRunLeads] = useState<Lead[] | null>(null);
   const [filterKey, setFilterKey] = useState<"all" | "website" | "public_registry">("all");
   const [runSignal, setRunSignal] = useState(0);
+  const [selected, setSelected] = useState<Lead | null>(null);
   const [keysStatus, setKeysStatus] = useState<any>(null);
 
   async function checkKeys() {
@@ -87,7 +89,7 @@ export default function Home() {
                     return (l.sources || []).some((s) => (filterKey === "website" ? s.source === "website" : s.source === "public_registry"));
                   })
                   .map((l, idx) => (
-                    <div key={idx} className="p-3 flex items-center justify-between">
+                    <button key={idx} className="p-3 flex items-center justify-between w-full text-left hover:bg-[#0CF29D]/5" onClick={()=>setSelected(l)}>
                       <div>
                         <div className="text-sm font-medium">{l.name}</div>
                         <div className="text-xs text-[#9BCDBA]">{l.website || "No site"}</div>
@@ -95,12 +97,13 @@ export default function Home() {
                       <div className="text-xs">
                         <span className="px-2 py-1 rounded bg-[#121A1B] border border-[#1E2A29]">{l.email || "No email"}</span>
                       </div>
-                    </div>
+                    </button>
                   ))}
               </div>
             )}
           </div>
         </div>
+        {selected && <LeadDetailsModal lead={selected} onClose={()=>setSelected(null)} />}
 
         {keysStatus && (
           <div className="bg-[#0F1517] border border-[#1E2A29] rounded-xl p-5">
