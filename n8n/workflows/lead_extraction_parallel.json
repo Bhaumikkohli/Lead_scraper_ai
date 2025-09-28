@@ -1,0 +1,277 @@
+{
+  "name": "Lead Extraction Parallel with ABR Validation",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "lead-extract",
+        "options": {}
+      },
+      "id": "webhookTrigger",
+      "name": "Trigger: Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {},
+      "id": "splitInBatches",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst keywords = body.keywords || $json.keywords;\nconst locations = body.locations || $json.locations;\nconst limit = Number(body.limit || $json.limit || 5);\nreturn [{ keywords, locations, limit }];"
+      },
+      "id": "normalizeInput",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 140]
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search.json",
+        "options": {
+          "queryParametersUi": {
+            "parameter": [
+              { "name": "engine", "value": "google" },
+              { "name": "q", "value": "={{$json.keywords + ' ' + $json.locations + ' company website'}}" },
+              { "name": "api_key", "value": "={{$env.SERPAPI_API_KEY}}" },
+              { "name": "num", "value": "={{$json.limit}}" }
+            ]
+          }
+        }
+      },
+      "id": "serpApi",
+      "name": "SERP: Company Sites",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $json.organic_results || $json.results || [];\nconst leads = results\n  .map(r => ({ name: r.title, website: r.link }))\n  .filter(l => !!l.website)\n  .slice(0, $json.limit || 5);\nreturn leads.map(l => ({ json: l }));"
+      },
+      "id": "parseSerp",
+      "name": "Parse SERP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 120]
+    },
+    {
+      "parameters": {
+        "options": {
+          "headerParametersUi": {
+            "parameter": [
+              { "name": "User-Agent", "value": "Mozilla/5.0 (Leadflow Bot)" }
+            ]
+          }
+        },
+        "url": "={{$json.website}}"
+      },
+      "id": "fetchWebsite",
+      "name": "Fetch Website HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1140, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $json.body || '';\nconst emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/ig;\nconst matches = html.match(emailRegex) || [];\nconst unique = [...new Set(matches)];\nreturn [{ emailCandidates: unique }];"
+      },
+      "id": "extractEmails",
+      "name": "Extract Emails (Regex)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 120]
+    },
+    {
+      "parameters": {
+        "url": "https://abr.business.gov.au/json/MatchingNames.aspx",
+        "options": {
+          "queryParametersUi": {
+            "parameter": [
+              { "name": "guid", "value": "={{$env.ABR_GUID}}" },
+              { "name": "name", "value": "={{$json.name}}" }
+            ]
+          }
+        }
+      },
+      "id": "abrMatch",
+      "name": "ABR: Match Names",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [900, 340]
+    },
+    {
+      "parameters": {
+        "url": "https://abr.business.gov.au/json/AbnDetails.aspx",
+        "options": {
+          "queryParametersUi": {
+            "parameter": [
+              { "name": "guid", "value": "={{$env.ABR_GUID}}" },
+              { "name": "abn", "value": "={{$json.Abn || $json.abn}}" }
+            ]
+          }
+        }
+      },
+      "id": "abrDetails",
+      "name": "ABR: Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1140, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "const match = $json.Names || $json;\nlet abn = undefined;\nif (Array.isArray(match) && match.length > 0) {\n  abn = match[0].Abn;\n}\nreturn [{ abn }];"
+      },
+      "id": "pickAbn",
+      "name": "Pick ABN",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "const details = $json;\nconst active = details.EntityStatus?.EntityStatusCode === 'Active';\nreturn [{ abr: details, abrActive: !!active }];"
+      },
+      "id": "validateAbr",
+      "name": "Validate ABR",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "const emails = $json.emailCandidates || [];\nconst best = emails.find(e => !e.includes('example') && !e.startsWith('info@')) || emails[0];\nreturn [{ email: best }];"
+      },
+      "id": "pickBestEmail",
+      "name": "Pick Best Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = {\n  name: $json.name,\n  website: $json.website,\n  email: $json.email,\n  abr: $json.abr,\n  abrActive: $json.abrActive\n};\nreturn [{ result: out }];"
+      },
+      "id": "mergeResults",
+      "name": "Assemble Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1860, 240]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2100, 240]
+    }
+  ],
+  "connections": {
+    "Trigger: Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          { "node": "SERP: Company Sites", "type": "main", "index": 0 },
+          { "node": "ABR: Match Names", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "SERP: Company Sites": {
+      "main": [
+        [
+          { "node": "Parse SERP", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse SERP": {
+      "main": [
+        [
+          { "node": "Fetch Website HTML", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fetch Website HTML": {
+      "main": [
+        [
+          { "node": "Extract Emails (Regex)", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Emails (Regex)": {
+      "main": [
+        [
+          { "node": "Pick Best Email", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pick Best Email": {
+      "main": [
+        [
+          { "node": "Assemble Result", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "ABR: Match Names": {
+      "main": [
+        [
+          { "node": "Pick ABN", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Pick ABN": {
+      "main": [
+        [
+          { "node": "ABR: Details", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "ABR: Details": {
+      "main": [
+        [
+          { "node": "Validate ABR", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Validate ABR": {
+      "main": [
+        [
+          { "node": "Assemble Result", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Assemble Result": {
+      "main": [
+        [
+          { "node": "Respond", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "leadflow-local"
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Australia/Sydney"
+  }
+}
+
