@@ -1,9 +1,10 @@
 "use client";
 
 import useSWR from "swr";
+import { authFetch } from "@/lib/authFetch";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string) => authFetch(url).then((r) => r.json());
 
 type KPIResponse = {
   totalLeads: number;
