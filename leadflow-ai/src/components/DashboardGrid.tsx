@@ -11,8 +11,6 @@ import { GeoMap } from "./widgets/GeoMap";
 import { Recommendations } from "./widgets/Recommendations";
 import { RunPanel } from "./widgets/RunPanel";
 import { DashboardWidgetInstance } from "@/types/dashboard";
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
 
 const ResponsiveGridLayout: any = WidthProvider(ResponsiveCore as any);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardGrid } from "@/components/DashboardGrid";
+import { DashboardGridClient } from "@/components/DashboardGridClient";
 import { DashboardWidgetInstance, UserDashboard } from "@/types/dashboard";
 import { authFetch } from "@/lib/authFetch";
 import { useAuth } from "@/components/AuthProvider";
@@ -44,7 +44,7 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <DashboardGrid widgets={dashboard?.widgets || []} onChange={handleChange} />
+      <DashboardGridClient widgets={dashboard?.widgets || []} onChange={handleChange} />
     </div>
   );
 }
